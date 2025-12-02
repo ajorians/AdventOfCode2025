@@ -26,30 +26,34 @@ fn main() {
 
         let amount = amountStr.parse::<i32>().unwrap();
 
-        if( direction == "R" )
+        for i in 0..amount
         {
-            currentLocation += amount;
-        }
-        else {
-            currentLocation -= amount;
-        }
+            if (direction == "R")
+            {
+                currentLocation += 1;
+            } else {
+                currentLocation -= 1;
+            }
 
-        while( currentLocation < 0 )
-        {
-            currentLocation += 100
-        }
-        while( currentLocation > 99 )
-        {
-            currentLocation -= 100;
-        }
+            if (currentLocation < 0)
+            {
+                currentLocation = 99
+            }
+            else if (currentLocation > 99)
+            {
+                currentLocation = 0;
+            }
 
-        if( currentLocation == 0)
-        {
-            timesHitZero += 1;
+            if (currentLocation == 0)
+            {
+                timesHitZero += 1;
+            }
         }
 
         println!("Current location: {:?}", currentLocation);
     }
+
+
 
     println!("Total times hit 0: {:?}", timesHitZero);
 }
