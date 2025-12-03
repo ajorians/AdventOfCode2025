@@ -84,8 +84,27 @@ fn isInvalid(value: i64) -> bool {
     let length = str.chars().count();
     let chars: Vec<char> = str.chars().collect();
 
-    let first: String = chars.iter().take(length / 2).collect();
-    let second: String = chars.iter().skip(length / 2).collect();
+    'outer: for splitAmount in 1 ..= length/2 {
 
-    return first == second;
+        if( length % splitAmount != 0 )
+        {
+            continue;
+        }
+
+        let numPieces = length / splitAmount;
+
+        let first: String = chars.iter().take( splitAmount).collect();
+        for split in 0 .. numPieces {
+            let piece: String = chars.iter().skip( split * splitAmount ).take( splitAmount).collect();
+
+            if( first != piece )
+            {
+                continue 'outer;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
