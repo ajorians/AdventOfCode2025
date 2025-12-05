@@ -25,6 +25,10 @@ struct Room
     room_data: Vec<Vec<PieceType>>,
 }
 
+impl Room {
+
+}
+
 impl Room
 {
     fn get_width(&self) -> i32
@@ -39,6 +43,9 @@ impl Room
     {
         let piece_type: PieceType = self.room_data[y as usize][x as usize];
         return piece_type;
+    }
+    fn set_at(&mut self, x: i32, y: i32, newPiece: PieceType) {
+        self.room_data[y as usize][x as usize] = newPiece;
     }
 
     fn getNumSurroundingRolls(&self, x: i32, y: i32) -> i32 {
@@ -118,14 +125,23 @@ fn main() {
 
     let lines = lines_from_file(file_path);
 
-    let room = build_room(lines);
+    let mut room = build_room(lines);
 
-    let numSpots = findNumSpots( room, 4 );
+    let mut totalSpots = 0;
+    loop {
+        let numSpots = findNumSpots( &mut room, 4 );
+        if(numSpots == 0)
+        {
+            break;
+        }
 
-    println!("Num spots with fewer than 4: {}", numSpots);
+        totalSpots += numSpots;
+    }
+
+    println!("Num spots with fewer than 4: {}", totalSpots);
 }
 
-fn findNumSpots(room: Room, limitSpots: i32) -> i32 {
+fn findNumSpots( room: &mut Room, limitSpots: i32) -> i32 {
     let width = room.get_width();
     let height = room.get_height();
 
@@ -149,7 +165,7 @@ fn findNumSpots(room: Room, limitSpots: i32) -> i32 {
 
             if( surroundingRolls < limitSpots )
             {
-
+                room.set_at(x, y, PieceType::Nothing);
                 numSpots += 1;
             }
         }
