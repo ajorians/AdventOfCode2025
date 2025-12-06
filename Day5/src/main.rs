@@ -13,6 +13,7 @@ fn lines_from_file(filename: impl AsRef<Path>) -> Vec<String> {
         .collect()
 }
 
+#[derive(PartialEq)]
 struct Range
 {
     start : i64,
@@ -67,19 +68,84 @@ fn main() {
         }
     }
 
-    let mut numFreshIngredients = 0;
-    for i in ingredients
-    {
-        let isFresh : bool = is_fresh( &ranges, i );
+    // let mut numFreshIngredients = 0;
+    // for i in ingredients
+    // {
+    //     let isFresh : bool = is_fresh( &ranges, i );
+    //
+    //     println!("Ingredient {} is {}", i, isFresh );
+    //
+    //     if( isFresh )
+    //     {
+    //         numFreshIngredients += 1;
+    //     }
+    // }
 
-        println!("Ingredient {} is {}", i, isFresh );
-
-        if( isFresh )
-        {
-            numFreshIngredients += 1;
-        }
-    }
+    let numFreshIngredients = get_num_fresh( &mut ranges );
     println!("There are {} fresh ingredients", numFreshIngredients );
+}
+
+fn get_num_fresh(freshRanges: &mut Vec<Range>) -> i64 {
+
+    freshRanges.sort_by(|a, b| a.start.cmp(&b.start));
+
+    for r in freshRanges.iter().clone() {
+        println!("Range {}-{}", r.start, r.end);
+    }
+    println!("FIXING RANGES");
+
+    //Reduce overlap
+    reduceOverlap( freshRanges );
+
+    let mut numFreshIngredients = 0;
+    for r in freshRanges {
+        let num = r.end - r.start + 1;
+        println!("Range {}-{} : ({})", r.start, r.end, num );
+        numFreshIngredients += num;
+    }
+
+    return numFreshIngredients;
+}
+
+fn reduceOverlap(ranges: &mut Vec<Range>) {
+    'outer: loop {
+        for i in 0..ranges.len() {
+            for j in 0..ranges.len()
+            {
+                if (i == j) {
+                    continue;
+                }
+
+                let a = &ranges[i];
+                let b = &ranges[j];
+                if (a.start >= b.start && a.end <= b.end)
+                {
+                    ranges.remove(i);
+                    continue 'outer;
+                }
+
+                if (b.start >= a.start && b.end <= a.end)
+                {
+                    ranges.remove(j);
+                    continue 'outer;
+                }
+
+                if( a.start < b.start && a.end >= b.start )
+                {
+                    ranges[i].end = b.start-1;
+                    continue;
+                }
+
+                if( a.start <= b.end && a.end > b.end )
+                {
+                    ranges[i].start = b.end+1;
+                    continue;
+                }
+            }
+        }
+
+        break;
+    }
 }
 
 fn is_fresh(freshRanges: &Vec<Range>, ingredient: i64) -> bool {
