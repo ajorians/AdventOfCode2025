@@ -55,11 +55,55 @@ fn main() {
     let mut sum : i64 = 0;
     for i in 0..numbers.len()
     {
-        let val = DoOperation( numbers[i].clone() );
+        let cephopodNumbers = ConvertToCephopod( numbers[i].clone() );
+        let val = DoOperation( cephopodNumbers.clone() );
         sum += val;
     }
 
     println!("Total sum: {}", sum);
+}
+
+fn ConvertToCephopod(values: Vec<String>) -> Vec<String> {
+    let mut result : Vec<String> = Vec::new();
+
+    let mut max_len= 0;
+    for str in values.clone()
+    {
+        let length = str.len();
+        if( length > max_len )
+        {
+            max_len = length;
+        }
+    }
+
+    let usefulLength = max_len-1;
+
+    for digit in (0..=usefulLength).rev()
+    {
+        let mut newNumber : String = String::new();
+        for i in 0..values.len()-1
+        {
+            let ch = values[i].chars().nth( digit ).unwrap();
+
+            if ch == ' '
+            {
+                continue;
+            }
+
+            newNumber.push( ch );
+        }
+
+        if( newNumber.is_empty() )
+        {
+            continue;
+        }
+
+        result.push( newNumber );
+    }
+
+    result.push( values.last().unwrap().clone() );
+
+    return result;
 }
 
 fn DoOperation(values: Vec<String>) -> i64 {
