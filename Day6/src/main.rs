@@ -19,55 +19,67 @@ fn main() {
 
     let contents = lines_from_file(file_path);
 
-    let mut numbers: Vec<Vec<i64>> = Vec::new();
+    let mut numbers: Vec<Vec<String>> = Vec::new();
 
-    let columns : Vec<&str> = contents.first().unwrap().split_whitespace().collect();
-    for i in 0..columns.len()
+    let mut indexes : Vec<usize> = Vec::new();
+    for (byte_index, character) in contents.last().unwrap().char_indices() {
+        if( character == '+' || character == '*' )
+        {
+            indexes.push(byte_index);
+        }
+    }
+
+    for i in 0..indexes.len()
     {
-        let column : Vec<i64> = Vec::new();
+        let column : Vec<String> = Vec::new();
         numbers.push( column );
     }
 
     let mut sum: i64 = 0;
     for s in contents {
-        let values: Vec<&str> = s.split_whitespace().collect();
-
-        let first = values.first().unwrap().to_string();
-        if( first.parse::<i64>().is_ok() ) {
-
-            for i in 0..values.len()
+        for i in 0..indexes.len()
+        {
+            let mut value : String = String::new();
+            if( i + 1 < indexes.len() )
             {
-                let v = values[i].parse::<i64>().unwrap();
-                numbers[i].push(v);
+                value = s[indexes[i]..indexes[i+1]].to_string();
             }
-        }
-        else {
-            for i in 0..values.len()
-            {
-                let op : String = values.get(i).unwrap().to_string();
-                let result = DoOperation(numbers[i].clone(), op);
-                sum += result;
+            else {
+                value = s[indexes[i]..].to_string();
             }
+
+            numbers[i].push( value );
         }
     }
+
+    let mut sum : i64 = 0;
+    for i in 0..numbers.len()
+    {
+        let val = DoOperation( numbers[i].clone() );
+        sum += val;
+    }
+
     println!("Total sum: {}", sum);
 }
 
-fn DoOperation(values: Vec<i64>, operation: String) -> i64 {
-    let mut result : i64 = values.first().unwrap().clone();
+fn DoOperation(values: Vec<String>) -> i64 {
+    let operation = values.last().unwrap().clone().trim().to_string();
 
-    for i in 1..values.len()
+    let mut result : i64 = values.first().unwrap().clone().trim().to_string().parse::<i64>().unwrap();
+
+    for i in 1..values.len()-1
     {
-        let v = values.get(i).unwrap().clone();
+        let v = values.get(i).unwrap().clone().trim().to_string();
         if( operation == "*" )
         {
-            result *= v;
+            result *= v.parse::<i64>().unwrap();
         }
         else if( operation == "+" )
         {
-            result += v;
+            result += v.parse::<i64>().unwrap();
         }
     }
 
     return result;
 }
+
