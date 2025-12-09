@@ -4,6 +4,7 @@ use std::{
     path::Path,
 };
 use std::cmp::PartialEq;
+use std::ops::Index;
 use regex::Regex;
 
 fn lines_from_file(filename: impl AsRef<Path>) -> Vec<String> {
@@ -20,7 +21,9 @@ struct Coordinate
 {
     x: i64,
     y: i64,
-    z: i64
+    z: i64,
+
+    junction: Vec<i32>
 }
 
 fn main() {
@@ -31,31 +34,130 @@ fn main() {
 
     let coords: Vec<Coordinate> = build_coordinates(contents);
 
-    let junctions = find_junctions( &coords );
+    let coordsWithJunctions = find_junctions( coords );
+
+    let mut NumsInJunctions : Vec<i32> = Vec::new();
+    let mut CountsInJunctions : Vec<i32> = Vec::new();
+
+    println!("Finding counts");
+    for coord in coordsWithJunctions
+    {
+        if( coord.junction.is_empty() == false )
+        {
+            println!("x: {}, y: {}, z: {} is in: {}", coord.x, coord.y, coord.z, coord.junction.first().unwrap().clone() );
+            let junctionNum = coord.junction.first().unwrap().clone();
+            let mut found = false;
+            for i in 0..NumsInJunctions.len()
+            {
+                if( NumsInJunctions[i] == junctionNum )
+                {
+                    CountsInJunctions[i] += 1;
+                    found = true;
+                    break;
+                }
+            }
+
+            if( found == false )
+            {
+                NumsInJunctions.push( junctionNum );
+                CountsInJunctions.push( 1 );
+            }
+        }
+    }
+
+    NumsInJunctions.sort();
+    NumsInJunctions.reverse();
 
     let mut result = 1;
-    for junction in &junctions {
-        println!("Junction has {} items", junctions.len());
-        result *= junctions.len();
+    for val in CountsInJunctions.iter()
+    {
+        println!( "Count: {}", val);
+        result *= val;
     }
 
     println!("Answer is: {}", result);
 }
 
-fn find_junctions(coordinates: &Vec<Coordinate>) -> Vec<Vec<Coordinate>>{
-    let mut junctions : Vec<Vec<Coordinate>> = Vec::new();
+fn find_junctions(receivedCoordinates:  Vec<Coordinate>) -> Vec<Coordinate>{
+    let mut coordinates: Vec<Coordinate> = receivedCoordinates.clone();
 
-    for i in 0..10 {
-        let (a, b) = find_closest( &junctions, &coordinates );
+    for times in 0..10
+    {
+        let mut closest = f64::MAX;
+        let mut closest_aIndex = 0;
+        let mut closest_bIndex = 0;
+        for i in 0..coordinates.len()
+        {
+            let first = coordinates.get(i).unwrap();
 
-        if( a == None &&b == None ){
-            break;
+            for j in 0..coordinates.len() {
+                if i == j
+                {
+                    continue;
+                }
+
+                let second = coordinates.get(j).unwrap();
+
+                let distance = (((second.x - first.x).abs().pow(2) + (second.y - first.y).abs().pow(2) + (second.z - first.z).abs().pow(2)) as f64).sqrt();
+                if distance < closest {
+
+                    //println!("Distance: {}", distance);
+
+                    //If both are already in a junction keep going
+                    if (first.junction.is_empty() == false && second.junction.is_empty() == false)
+                    {
+                        continue;
+                    }
+
+                    closest = distance;
+                    closest_aIndex = i;
+                    closest_bIndex = j;
+                }
+
+            }
         }
 
-        AddToJunction( &mut junctions, a.unwrap(), b.unwrap() );
+        //println!("Closest: {}", closest);
+
+        let mut newA = coordinates.get(closest_aIndex).unwrap().clone();
+        let mut newB = coordinates.get(closest_bIndex).unwrap().clone();
+
+        //println!("X: {}, Y: {}, Z: {}", newA.x, newA.y, newA.z);
+        //println!("X: {}, Y: {}, Z: {}", newB.x, newB.y, newB.z);
+
+        if( newA.junction.is_empty() == false )
+        {
+            //Add b to same junction
+            newB.junction.push(newA.junction.first().unwrap().clone());
+            coordinates.remove( closest_bIndex );
+            coordinates.insert( closest_bIndex, newB );
+
+            //println!("Connected to existing junction: {}", newA.junction.first().unwrap().clone() );
+        }
+        else if( newB.junction.is_empty() == false )
+        {
+            //Add b to same junction
+            newA.junction.push(newB.junction.first().unwrap().clone());
+            coordinates.remove( closest_aIndex );
+            coordinates.insert( closest_aIndex, newA );
+
+            //println!("Connected to existing junction: {}", newB.junction.first().unwrap().clone() );
+        }
+        else
+        {
+            newA.junction.push( times );
+            coordinates.remove( closest_aIndex );
+            coordinates.insert( closest_aIndex, newA );
+
+            newB.junction.push( times );
+            coordinates.remove( closest_bIndex );
+            coordinates.insert( closest_bIndex, newB );
+
+            //println!("New Junction: {}", times );
+        }
     }
 
-    return junctions;
+    return coordinates;
 }
 
 fn find_closest(junctions: &Vec<Vec<Coordinate>>, coordinates: &Vec<Coordinate>) -> (Option<Coordinate>, Option<Coordinate>) {
@@ -168,7 +270,9 @@ fn build_coordinates(lines: Vec<String>) -> Vec<Coordinate> {
         {
             x : captures.get(1).unwrap().as_str().parse().unwrap(),
             y : captures.get(2).unwrap().as_str().parse().unwrap(),
-            z : captures.get(3).unwrap().as_str().parse().unwrap()
+            z : captures.get(3).unwrap().as_str().parse().unwrap(),
+
+            junction : Vec::new()
         };
 
         coord_vec.push(cord);
